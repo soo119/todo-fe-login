@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import TodoPage from "./pages/TodoPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -10,13 +10,16 @@ import api from './utils/api';
 
 function App() {
   const [user, setUser] = useState( null );
+  const navigate = useNavigate();
   const getUser = async() =>{
     try {
       const storedToken=sessionStorage.getItem('token');
-      if(storedToken){
-        const response=await api.get('/user/me');
-        setUser(response.data.user)
+      if(!storedToken){
+        setUser(null);
+        return;
       }
+        const response=await api.get('/api/user/me');
+        setUser(response.data.user)
     } catch (error) {
       setUser( null );
     }
@@ -27,11 +30,22 @@ function App() {
     getUser();
   }, []);
 
+  const logout = () => {                        
+    sessionStorage.removeItem("token");
+    if (api?.defaults?.headers?.common) {
+      delete api.defaults.headers.common.Authorization;
+    }
+    setUser(null);
+    navigate("/login", { replace: true });
+  };                                             
+
+
+
   return (
     <Routes>
       <Route path="/" element={
         <PrivateRoute user={user}>
-          <TodoPage />
+          <TodoPage user={user} onLogout={logout} />  {/* ⭐ 추가: onLogout prop 전달 */}
         </PrivateRoute>        
       }
       />
