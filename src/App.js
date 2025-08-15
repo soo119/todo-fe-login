@@ -10,21 +10,25 @@ import api from './utils/api';
 
 function App() {
   const [user, setUser] = useState( null );
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const getUser = async() =>{
     try {
       const storedToken=sessionStorage.getItem('token');
       if(!storedToken){
         setUser(null);
+        setLoading(false);                              // ⭐ 추가
         return;
       }
-        const response=await api.get('/api/user/me');
+        const response=await api.get('/user/me');
         setUser(response.data.user)
     } catch (error) {
       setUser( null );
+    } finally {
+      setLoading(false);                                // ⭐ 추가
     }
+  };
 
-  }
 
   useEffect(() => {
     getUser();
@@ -44,9 +48,9 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={
-        <PrivateRoute user={user}>
-          <TodoPage user={user} onLogout={logout} />  {/* ⭐ 추가: onLogout prop 전달 */}
-        </PrivateRoute>        
+        <PrivateRoute user={user} loading={loading}>   {/* ⭐ 추가: loading 전달 */}
+            <TodoPage user={user} onLogout={logout} />
+          </PrivateRoute>
       }
       />
       <Route path="/register" element={<RegisterPage />} />
